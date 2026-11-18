@@ -1,0 +1,259 @@
+{
+  "team_name": "Hitting Program",
+  "site_title": "Swing Metrics",
+  "timezone": "America/Regina",
+  "recent_days": 30,
+  "min_swings": 10,
+  "peak_method": "max",
+  "history_mode": "merge",
+  "timestamps_are_utc": true,
+  "exclude_action_types": [
+    "air Swing"
+  ],
+  "weight_classes": [
+    {
+      "name": "Under 150",
+      "max": 149.99
+    },
+    {
+      "name": "150–174",
+      "min": 150,
+      "max": 174.99
+    },
+    {
+      "name": "175–199",
+      "min": 175,
+      "max": 199.99
+    },
+    {
+      "name": "200+",
+      "min": 200
+    }
+  ],
+  "columns": {
+    "id": [
+      "captureid",
+      "Capture ID",
+      "Swing ID"
+    ],
+    "user_id": [
+      "user_id",
+      "User ID",
+      "Player ID",
+      "Athlete ID"
+    ],
+    "player": [
+      "Player",
+      "Player Name",
+      "Athlete",
+      "Athlete Name",
+      "Name"
+    ],
+    "first_name": [
+      "first_name",
+      "First Name"
+    ],
+    "last_name": [
+      "last_name",
+      "Last Name"
+    ],
+    "date": [
+      "Swing Timestamp",
+      "Date",
+      "Timestamp",
+      "Swing Date"
+    ],
+    "timezone": [
+      "timezone",
+      "Time Zone"
+    ],
+    "action_type": [
+      "actiontype",
+      "Action Type"
+    ]
+  },
+  "metrics": [
+    {
+      "key": "bat_speed",
+      "label": "Bat Speed",
+      "short": "Bat Spd",
+      "unit": "mph",
+      "direction": "higher",
+      "decimals": 1,
+      "columns": [
+        "Bat Speed (MPH)",
+        "Bat Speed"
+      ]
+    },
+    {
+      "key": "hand_speed",
+      "label": "Peak Hand Speed",
+      "short": "Hand Spd",
+      "unit": "mph",
+      "direction": "higher",
+      "decimals": 1,
+      "columns": [
+        "Peak Hand Speed (MPH)",
+        "Peak Hand Speed"
+      ]
+    },
+    {
+      "key": "rot_accel",
+      "label": "Rotational Acceleration",
+      "short": "Rot Acc",
+      "unit": "g",
+      "direction": "higher",
+      "decimals": 1,
+      "columns": [
+        "Rotational Acceleration (G's)",
+        "Rotational Acceleration (g)",
+        "Rotational Acceleration"
+      ]
+    },
+    {
+      "key": "power",
+      "label": "Power",
+      "short": "Power",
+      "unit": "kW",
+      "direction": "higher",
+      "decimals": 2,
+      "columns": [
+        "Power (kW)",
+        "Power"
+      ]
+    },
+    {
+      "key": "on_plane",
+      "label": "On Plane Efficiency",
+      "short": "On Plane",
+      "unit": "%",
+      "direction": "higher",
+      "decimals": 0,
+      "columns": [
+        "On Plane Efficiency (%)",
+        "On Plane Efficiency"
+      ],
+      "fraction_to_percent": true
+    },
+    {
+      "key": "ttc",
+      "label": "Time to Contact",
+      "short": "TTC",
+      "unit": "s",
+      "direction": "lower",
+      "decimals": 3,
+      "columns": [
+        "Time to Contact (s)",
+        "Time to Contact (sec)",
+        "Time to Contact"
+      ]
+    },
+    {
+      "key": "commit_time",
+      "label": "Commit Time",
+      "short": "Commit",
+      "unit": "s",
+      "direction": "lower",
+      "decimals": 3,
+      "columns": [
+        "Commit Time (s)",
+        "Commit Time"
+      ]
+    },
+    {
+      "key": "attack_angle",
+      "label": "Attack Angle",
+      "short": "Attack",
+      "unit": "°",
+      "direction": "none",
+      "decimals": 1,
+      "columns": [
+        "Attack Angle (°'s)",
+        "Attack Angle (deg)",
+        "Attack Angle"
+      ]
+    },
+    {
+      "key": "vba",
+      "label": "Vertical Bat Angle",
+      "short": "VBA",
+      "unit": "°",
+      "direction": "none",
+      "decimals": 1,
+      "columns": [
+        "Vert. Bat Angle (°'s)",
+        "Vertical Bat Angle (deg)",
+        "Vertical Bat Angle"
+      ]
+    },
+    {
+      "key": "early_conn",
+      "label": "Early Connection",
+      "short": "Early Conn",
+      "unit": "°",
+      "direction": "none",
+      "decimals": 0,
+      "columns": [
+        "Early Connection (°'s)",
+        "Early Connection (deg)",
+        "Early Connection"
+      ]
+    },
+    {
+      "key": "conn_impact",
+      "label": "Connection at Impact",
+      "short": "Conn @ Imp",
+      "unit": "°",
+      "direction": "none",
+      "decimals": 0,
+      "columns": [
+        "Connection at Impact (°'s)",
+        "Connection at Impact (deg)",
+        "Connection at Impact"
+      ]
+    },
+    {
+      "key": "hinge",
+      "label": "Hinge Angle at Impact",
+      "short": "Hinge",
+      "unit": "°",
+      "direction": "none",
+      "decimals": 0,
+      "columns": [
+        "Hinge Angle at Impact (°'s)",
+        "Hinge Angle at Impact"
+      ]
+    },
+    {
+      "key": "body_tilt",
+      "label": "Body Tilt Angle",
+      "short": "Body Tilt",
+      "unit": "°",
+      "direction": "none",
+      "decimals": 0,
+      "columns": [
+        "Body Tilt Angle (°'s)",
+        "Body Tilt Angle"
+      ]
+    }
+  ],
+  "export": {
+    "login_url": "https://teams.winreality.com/login",
+    "insights_url": "https://teams.winreality.com/insights",
+    "login": {
+      "email_selector": "input[type=email], input[name=email], input[name=username], input[autocomplete=username]",
+      "password_selector": "input[type=password]",
+      "submit_selector": "button[type=submit], button:has-text('Log In'), button:has-text('Sign In'), button:has-text('Login')"
+    },
+    "before_export_steps": [],
+    "export_steps": [
+      {
+        "click": "button:has-text('Export'), button:has-text('Download'), [aria-label*='xport'], [aria-label*='ownload']"
+      },
+      {
+        "click_optional": "text=/Save as CSV|Export CSV|CSV/i"
+      }
+    ],
+    "timeout_ms": 60000
+  }
+}

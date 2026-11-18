@@ -1,0 +1,87 @@
+name: Nightly refresh
+
+on:
+  schedule:
+    - cron: "23 9 * * *"   # 09:23 UTC = 3:23 AM Saskatchewan time, every night
+  workflow_dispatch:        # "Run workflow" button on the Actions tab
+  push:
+    branches: [main]
+    paths:
+      - "data/inbox/**"
+      - "data/roster.csv"
+      - "config/**"
+      - "site/**"
+      - "scripts/**"
+      - ".github/workflows/refresh.yml"
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Download latest export from WIN Reality
+        id: fetch
+        if: github.event_name != 'push'
+        continue-on-error: true
+        env:
+          WR_EMAIL: ${{ secrets.WR_EMAIL }}
+          WR_PASSWORD: ${{ secrets.WR_PASSWORD }}
+        run: |
+          if [ -z "$WR_EMAIL" ]; then echo "No WR_EMAIL secret; skipping download."; exit 0; fi
+          pip install --quiet playwright==1.48.0
+          python -m playwright install --with-deps chromium
+          python scripts/fetch_export.py
+
+      - name: Upload debug screenshot
+        if: steps.fetch.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: export-debug
+          path: debug/
+          retention-days: 7
+
+      - name: Build dashboard data
+        run: python scripts/build_data.py
+
+      - name: Commit data changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A data site/data.json
+          if git diff --cached --quiet; then
+            echo "No data changes"
+          else
+            git commit -m "Data refresh $(date -u +%Y-%m-%d)"
+            git push
+          fi
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v4
+
+      - name: Fail the run if the automatic export failed (so you get an email)
+        if: steps.fetch.outcome == 'failure'
+        run: |
+          echo "::error::Automatic export failed. Download the 'export-debug' artifact to see the screenshot."
+          exit 1
