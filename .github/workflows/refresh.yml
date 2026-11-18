@@ -39,7 +39,8 @@ jobs:
 
       - name: Download latest export from WIN Reality
         id: fetch
-        if: github.event_name != 'push'
+        # Off until the repo variable AUTO_EXPORT is set to true (Settings > Secrets and variables > Actions > Variables)
+        if: github.event_name != 'push' && vars.AUTO_EXPORT == 'true'
         continue-on-error: true
         env:
           WR_EMAIL: ${{ secrets.WR_EMAIL }}

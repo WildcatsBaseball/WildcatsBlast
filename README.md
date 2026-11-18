@@ -1,4 +1,4 @@
-# Swing Metrics dashboard
+# Wildcats Blast
 
 A free, public website that shows every hitter's Blast swing metrics (via WIN Reality) next to their peers'.
 
@@ -41,7 +41,11 @@ site/                     the website (plain HTML/CSS/JS, no build step)
 - **Players who left**: set `active` to `no` to hide them.
 - **Weight classes** are defined in `config/settings.json → weight_classes`. You can also type a class name directly into the roster's `weight_class` column, which overrides the weight-based class.
 
-## If the nightly download breaks
+## Automatic download (currently off)
+
+The nightly job still runs every night. It rebuilds the site so the "last 30 days" window stays current, but it does not log into WIN Reality right now. Automated sign-in didn't get past the login page. Load data by uploading an export (see below). To try the automatic download again later, add a repository **variable** (not a secret) named `AUTO_EXPORT` with the value `true` under **Settings → Secrets and variables → Actions → Variables**.
+
+## Loading new data / if the nightly download breaks
 
 The automatic export clicks through the WIN Reality site like a person would. If they redesign the page, the job fails and GitHub emails you. In the meantime:
 

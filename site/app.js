@@ -112,8 +112,8 @@
         `Show players under ${D.min_swings} swings`));
 
     const legend = h("div", { class: "legend" },
-      h("span", { class: "scale", "aria-hidden": "true" }, ["q1", "q2", "q3", "q4", "q5"].map((q) => h("span", { style: `background:var(--${q})` }))),
-      h("span", {}, "Shading = percentile among the players shown (darker = better)."),
+      h("span", { class: "scale", "aria-hidden": "true" }, h("em", {}, "Bottom"), ["q1", "q2", "q3", "q4", "q5"].map((q) => h("span", { style: `background:var(--${q})` })), h("em", {}, "Top")),
+      h("span", {}, "Shading = percentile among the players shown: navy = top 20%, red = bottom 20%."),
       h("span", {}, S.stat === "peak" ? "Peak = best single swing." : "Angle metrics (°) aren't shaded — there's no single best value."),
       h("span", {}, `Ranked players need ${D.min_swings}+ swings (${winLabel()}).`));
 
@@ -260,7 +260,7 @@
         const v = st.avg[m.key], pk = st.peak[m.key];
         const pa = !low && ranked(m) ? percentile(v, others.map((o) => statsOf(o).avg[m.key]).filter((x) => x != null), m.direction) : null;
         const pp = !low && ranked(m) ? percentile(pk, others.map((o) => statsOf(o).peak[m.key]).filter((x) => x != null), m.direction) : null;
-        const pctEl = (pc) => pc == null ? null : h("span", { class: "pct" + (pc >= 80 ? " top" : "") }, `${ordinal(pc)} percentile`);
+        const pctEl = (pc) => pc == null ? null : h("span", { class: "pct" + (pc >= 80 ? " top" : pc < 20 ? " low" : "") }, `${ordinal(pc)} percentile`);
         grid.append(
           h("div", { class: "lbl" }, m.label, m.direction === "lower" ? h("small", {}, " · lower is better") : null),
           h("div", { class: "cell-avg" }, h("span", { class: "val" }, fmt(v, m), h("span", { class: "u" }, m.unit)), pctEl(pa)),
@@ -401,7 +401,7 @@
       D = data;
       M = Object.fromEntries(D.metrics.map((m) => [m.key, m]));
       document.getElementById("title").textContent = D.site_title;
-      document.getElementById("team").textContent = D.team_name;
+      document.getElementById("team").textContent = D.team_name || "";
       document.getElementById("meta").textContent =
         `Updated ${fmtDate(D.generated_at)} · swings through ${fmtDate(D.data_through)}`;
       document.getElementById("foot").textContent =
