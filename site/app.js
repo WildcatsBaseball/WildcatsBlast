@@ -113,7 +113,7 @@
 
     const legend = h("div", { class: "legend" },
       h("span", { class: "scale", "aria-hidden": "true" }, h("em", {}, "Bottom"), ["q1", "q2", "q3", "q4", "q5"].map((q) => h("span", { style: `background:var(--${q})` })), h("em", {}, "Top")),
-      h("span", {}, "Shading = percentile among the players shown: navy = top 20%, red = bottom 20%."),
+      h("span", {}, "Shading = percentile among the players shown: red = top 20%, navy = bottom 20%."),
       h("span", {}, S.stat === "peak" ? "Peak = best single swing." : "Angle metrics (°) aren't shaded — there's no single best value."),
       h("span", {}, `Ranked players need ${D.min_swings}+ swings (${winLabel()}).`));
 

@@ -74,6 +74,9 @@ jobs:
             git push
           fi
 
+      - name: Stamp file versions so browsers load the new CSS/JS/logo right away
+        run: sed -i "s/__V__/${GITHUB_SHA::8}-${GITHUB_RUN_NUMBER}/g" site/index.html
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
