@@ -2,7 +2,10 @@
   "team_name": "",
   "site_title": "Wildcats Blast",
   "timezone": "America/Regina",
-  "recent_days": 30,
+  "recent_windows_days": [
+    30,
+    7
+  ],
   "min_swings": 10,
   "roster_only": true,
   "peak_method": "max",

@@ -42,9 +42,10 @@
   const ordinal = (n) => { const v = n % 100; return n + (["th", "st", "nd", "rd"][(v - 20) % 10] || ["th", "st", "nd", "rd"][v] || "th"); };
   const fmtDate = (iso, opts) => iso ? new Date(iso.length === 10 ? iso + "T12:00:00" : iso)
       .toLocaleDateString(undefined, opts || { month: "short", day: "numeric", year: "numeric" }) : "—";
-  const statsOf = (p, win = S.win) => win === "recent" ? p.recent : p.overall;
+  const statsOf = (p, win = S.win) => p.stats[win] || null;
   const ranked = (m) => m.direction !== "none";
-  const winLabel = () => S.win === "recent" ? `last ${D.recent_days} days` : "all time";
+  const winLabel = () => (D.windows.find((w) => w.key === S.win) || D.windows[0]).label.toLowerCase();
+  const winOpts = () => D.windows.map((w) => [w.key, w.label]);
 
   /** Percentile (0-100) of value among others; ties count half. Higher = better for the metric. */
   function percentile(value, others, dir) {
@@ -104,7 +105,7 @@
     const rerender = () => { save(); renderBoard(); };
     const controls = h("div", { class: "controls" },
       h("div", { class: "search" }, searchIcon, searchInput, datalist),
-      seg([["overall", "All time"], ["recent", `Last ${D.recent_days} days`]], S.win, (v) => { S.win = v; rerender(); }, "Time window"),
+      seg(winOpts(), S.win, (v) => { S.win = v; rerender(); }, "Time window"),
       seg([["avg", "Average"], ["peak", "Peak"]], S.stat, (v) => { S.stat = v; rerender(); }, "Statistic"),
       D.grad_classes.length ? select("Grad class", [["", "All"], ...D.grad_classes.map((g) => [String(g), String(g)])], S.grad, (v) => { S.grad = v; rerender(); }) : null,
       D.weight_classes.length ? select("Weight class", [["", "All"], ...D.weight_classes.map((w) => [w, w])], S.wclass, (v) => { S.wclass = v; rerender(); }) : null,
@@ -207,7 +208,7 @@
 
     const table = h("table", { class: "board" }, h("thead", {}, head), h("tbody", {}, body));
     card.replaceChildren(rows.length ? table : h("p", { class: "empty" },
-      q ? `No player matching “${S.q}” has swings ${S.win === "recent" ? "in the " + winLabel() : "recorded"}.` : "No players match these filters."));
+      q ? `No player matching “${S.q}” has swings ${S.win !== "overall" ? "in the " + winLabel() : "recorded"}.` : "No players match these filters."));
   }
 
   // ------------------------------------------------------------------ player
@@ -227,9 +228,9 @@
     const chips = h("div", { class: "chips" },
       p.grad ? h("span", { class: "chip" }, "Class of ", h("b", {}, p.grad)) : null,
       p.wclass ? h("span", { class: "chip" }, h("b", {}, p.wclass), " lbs") : null,
-      h("span", { class: "chip" }, h("b", {}, p.overall.n), " swings all time"),
-      h("span", { class: "chip" }, h("b", {}, p.recent ? p.recent.n : 0), ` in last ${D.recent_days} days`),
-      h("span", { class: "chip" }, "Last swing ", h("b", {}, fmtDate(p.overall.last, { month: "short", day: "numeric" }))));
+      h("span", { class: "chip" }, h("b", {}, p.stats.overall.n), " swings all time"),
+      D.windows.filter((w) => w.days).map((w) => h("span", { class: "chip" }, h("b", {}, p.stats[w.key] ? p.stats[w.key].n : 0), ` in ${w.label.toLowerCase()}`)),
+      h("span", { class: "chip" }, "Last swing ", h("b", {}, fmtDate(p.stats.overall.last, { month: "short", day: "numeric" }))));
 
     const cmpOpts = [["all", "All players"]];
     if (p.grad) cmpOpts.push(["grad", `Class of ${p.grad}`]);
@@ -237,7 +238,7 @@
     const head = h("div", { class: "p-head" },
       h("div", {}, h("h2", {}, p.name), chips),
       h("div", { class: "controls", style: "margin:0" },
-        seg([["overall", "All time"], ["recent", `Last ${D.recent_days} days`]], S.win, (v) => { S.win = v; rer(); }, "Time window"),
+        seg(winOpts(), S.win, (v) => { S.win = v; rer(); }, "Time window"),
         select("Compare to", cmpOpts, S.cmp, (v) => { S.cmp = v; rer(); })));
 
     const parts = [h("a", { class: "back", href: "#/" }, "← All players"), head];
@@ -400,6 +401,7 @@
     .then((data) => {
       D = data;
       M = Object.fromEntries(D.metrics.map((m) => [m.key, m]));
+      if (!D.windows.some((w) => w.key === S.win)) S.win = S.win === "recent" && D.windows.some((w) => w.key === "d30") ? "d30" : "overall";
       document.getElementById("title").textContent = D.site_title;
       document.getElementById("team").textContent = D.team_name || "";
       document.getElementById("meta").textContent =

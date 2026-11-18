@@ -45,7 +45,7 @@ site/                     the website (plain HTML/CSS/JS, no build step)
 
 ## Automatic download (currently off)
 
-The nightly job still runs every night. It rebuilds the site so the "last 30 days" window stays current, but it does not log into WIN Reality right now. Automated sign-in didn't get past the login page. Load data by uploading an export (see below). To try the automatic download again later, add a repository **variable** (not a secret) named `AUTO_EXPORT` with the value `true` under **Settings → Secrets and variables → Actions → Variables**.
+The nightly job still runs every night. It rebuilds the site so the "last 30 days" and "last 7 days" windows stay current, but it does not log into WIN Reality right now. Automated sign-in didn't get past the login page. Load data by uploading an export (see below). To try the automatic download again later, add a repository **variable** (not a secret) named `AUTO_EXPORT` with the value `true` under **Settings → Secrets and variables → Actions → Variables**.
 
 ## Loading new data / if the nightly download breaks
 
@@ -81,7 +81,7 @@ Then open http://localhost:8000. The build script uses only the Python standard 
 | Setting | Meaning |
 |---|---|
 | `min_swings` | Swings needed in a window to be ranked or shaded (default 10) |
-| `recent_days` | Length of the "recent" window (default 30) |
+| `recent_windows_days` | The recent-window tabs, in days (default `[30, 7]` gives "Last 30 days" and "Last 7 days" next to "All time") |
 | `peak_method` | `max` uses the best single swing. `p90` ignores one-off glitch swings. |
 | `exclude_action_types` | Defaults to `["air Swing"]`, which drops swings with no ball contact. Use `[]` to include them. |
 | `metrics[].direction` | `higher` / `lower` / `none`. `none` means the metric isn't ranked, as for angles. |

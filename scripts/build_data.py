@@ -332,8 +332,8 @@ def main() -> None:
 
     tz = ZoneInfo(cfg.get("timezone") or "UTC")
     now = datetime.now(tz)
-    recent_days = int(cfg.get("recent_days", 30))
-    cutoff = (now.date() - timedelta(days=recent_days - 1)).isoformat()
+    window_days = [int(d) for d in cfg.get("recent_windows_days", [cfg.get("recent_days", 30)])]
+    cutoffs = {f"d{d}": (now.date() - timedelta(days=d - 1)).isoformat() for d in window_days}
 
     groups: dict[int, list[dict]] = defaultdict(list)
     row_of: dict[int, dict] = {}
@@ -365,8 +365,9 @@ def main() -> None:
             "grad": int(grad) if grad.isdigit() else None,
             "wclass": row.get("weight_class") or weight_class_for(parse_num(row.get("weight_lbs")),
                                                                   cfg.get("weight_classes", [])),
-            "overall": summarize(lst, present, peak_method),
-            "recent": summarize([s for s in lst if s["datetime"][:10] >= cutoff], present, peak_method),
+            "stats": {"overall": summarize(lst, present, peak_method),
+                      **{k: summarize([s for s in lst if s["datetime"][:10] >= c], present, peak_method)
+                         for k, c in cutoffs.items()}},
             "trend": weekly(lst, present),
         })
     players.sort(key=lambda p: norm_name(p["name"]))
@@ -376,7 +377,8 @@ def main() -> None:
         "data_through": max((s["datetime"][:10] for s in swings.values()), default=None),
         "team_name": cfg.get("team_name", ""),
         "site_title": cfg.get("site_title", "Swing Metrics"),
-        "recent_days": recent_days,
+        "windows": [{"key": "overall", "label": "All time"}]
+                   + [{"key": f"d{d}", "label": f"Last {d} days", "days": d} for d in window_days],
         "min_swings": int(cfg.get("min_swings", 10)),
         "peak_method": peak_method,
         "metrics": [{k: m[k] for k in ("key", "label", "short", "unit", "direction", "decimals")} for m in present],
