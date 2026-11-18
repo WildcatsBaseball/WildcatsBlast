@@ -51,6 +51,23 @@ def expand(value: str) -> str:
     return out
 
 
+def wait_hidden(locator, ms: int) -> bool:
+    try:
+        locator.wait_for(state="hidden", timeout=ms)
+        return True
+    except PWTimeout:
+        return False
+
+
+def page_text(page) -> str:
+    """Visible text of the page (never includes typed input values), for the failure log."""
+    try:
+        txt = page.inner_text("body", timeout=5000)
+    except Exception:
+        return "(unavailable)"
+    return " | ".join(line.strip() for line in txt.splitlines() if line.strip())[:1500]
+
+
 def run_step(page, step: dict, timeout: int) -> None:
     if "click" in step:
         page.locator(step["click"]).first.click(timeout=timeout)
@@ -107,11 +124,17 @@ def main() -> int:
                     pw_field.wait_for(state="visible", timeout=timeout)
                 pw_field.fill(password)
                 page.locator(login["submit_selector"]).first.click()
+                # Single-page apps log in without a page load: wait for the password box to go away.
+                if not wait_hidden(pw_field, 30000):
+                    print("  login form still showing; trying Enter key")
+                    if pw_field.is_visible():
+                        pw_field.press("Enter")
+                    if not wait_hidden(pw_field, 20000):
+                        raise RuntimeError("Still on the login page after submitting. Page text: " + page_text(page))
                 page.wait_for_load_state("networkidle", timeout=timeout)
+                print(f"  logged in; now at {page.url}")
                 if "insights" not in page.url:
                     page.goto(CFG["insights_url"], wait_until="networkidle", timeout=timeout)
-            if page.locator(login["password_selector"]).first.is_visible():
-                raise RuntimeError("Still on the login page after submitting; check WR_EMAIL / WR_PASSWORD.")
 
             for step in CFG.get("before_export_steps", []):
                 print(f"  step: {step}")
@@ -141,6 +164,13 @@ def main() -> int:
             except Exception:
                 pass
             print(f"EXPORT FAILED: {exc}", file=sys.stderr)
+            try:
+                print(f"  page url: {page.url}", file=sys.stderr)
+                print(f"  page text: {page_text(page)}", file=sys.stderr)
+                buttons = page.locator("button, a[role=button], [role=button]").all_inner_texts()
+                print(f"  buttons: {[b.strip() for b in buttons if b.strip()][:40]}", file=sys.stderr)
+            except Exception:
+                pass
             return 1
         finally:
             browser.close()

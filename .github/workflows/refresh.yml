@@ -48,7 +48,7 @@ jobs:
           if [ -z "$WR_EMAIL" ]; then echo "No WR_EMAIL secret; skipping download."; exit 0; fi
           pip install --quiet playwright==1.48.0
           python -m playwright install --with-deps chromium
-          python scripts/fetch_export.py
+          python -u scripts/fetch_export.py
 
       - name: Upload debug screenshot
         if: steps.fetch.outcome == 'failure'
