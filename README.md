@@ -1,5 +1,7 @@
 # Wildcats Blast
 
+Live site: **https://mikeozga.github.io/Wildcats-Blast/**
+
 A free, public website that shows every hitter's Blast swing metrics (via WIN Reality) next to their peers'.
 
 - **Leaderboard**: sortable by any metric, with averages or peaks and all-time or last-30-day windows. You can filter by grad class and weight class, and cells are shaded by percentile.
@@ -21,10 +23,10 @@ site/                     the website (plain HTML/CSS/JS, no build step)
 
 ## One-time setup
 
-1. **Create the repository.** On GitHub, create a new **public** repo (for example `swing-metrics`), then push this folder:
+1. **Create the repository.** On GitHub, create a new **public** repo (for example `Wildcats-Blast`), then push this folder:
 
    ```bash
-   git remote add origin https://github.com/<you>/swing-metrics.git
+   git remote add origin https://github.com/<you>/Wildcats-Blast.git
    ```
 
    ```bash
@@ -33,7 +35,7 @@ site/                     the website (plain HTML/CSS/JS, no build step)
 
 2. **Turn on Pages.** In the repo, go to **Settings → Pages → Build and deployment → Source** and choose **GitHub Actions**.
 3. **Add the WIN Reality login.** Go to **Settings → Secrets and variables → Actions → New repository secret** and add `WR_EMAIL` and `WR_PASSWORD`. Use a coach login that can see the whole program. A dedicated "data" coach account is ideal.
-4. **Run it.** Go to **Actions → Nightly refresh → Run workflow**. Your site will be at `https://<you>.github.io/swing-metrics/`.
+4. **Run it.** Go to **Actions → Nightly refresh → Run workflow**. Your site will be at `https://<you>.github.io/Wildcats-Blast/`.
 
 ## Weekly upkeep
 
