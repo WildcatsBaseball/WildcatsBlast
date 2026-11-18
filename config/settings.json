@@ -4,6 +4,7 @@
   "timezone": "America/Regina",
   "recent_days": 30,
   "min_swings": 10,
+  "roster_only": true,
   "peak_method": "max",
   "history_mode": "merge",
   "timestamps_are_utc": true,

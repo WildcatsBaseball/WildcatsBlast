@@ -5,8 +5,9 @@
   2. Normalize to one row per swing and merge into data/swings.csv, the running
      history. Swings are de-duplicated by capture id, so re-importing overlapping
      date ranges is safe. Raw exports are deleted after import.
-  3. Join data/roster.csv (grad year, weight / weight class). Players seen for the
-     first time are appended to the roster with blank fields for you to fill in.
+  3. Join data/roster.csv (grad year, weight / weight class). With "roster_only": true
+     (the default here) only roster players are shown; anyone else is listed in
+     data/unmatched_players.csv. With false, new players are appended to the roster.
   4. Compute per-player averages and peaks (all time + last N days) plus weekly
      trend points, and write site/data.json.
 
@@ -30,6 +31,7 @@ CONFIG = ROOT / "config" / "settings.json"
 INBOX = ROOT / "data" / "inbox"
 SWINGS = ROOT / "data" / "swings.csv"
 ROSTER = ROOT / "data" / "roster.csv"
+UNMATCHED = ROOT / "data" / "unmatched_players.csv"
 OUT = ROOT / "site" / "data.json"
 
 ROSTER_FIELDS = ["name", "user_id", "grad_year", "weight_lbs", "weight_class", "active", "notes"]
@@ -214,11 +216,16 @@ def weight_class_for(weight: float | None, classes: list[dict]) -> str:
     return ""
 
 
-def match_roster(swings: dict[str, dict], roster: list[dict]) -> dict[str, dict]:
-    """Map each swing's player key to a roster row, adding rows for new players."""
+def match_roster(swings: dict[str, dict], roster: list[dict], roster_only: bool) -> dict[str, dict | None]:
+    """Map each swing's player key to a roster row.
+
+    roster_only=True: players not on the roster are left out (listed in data/unmatched_players.csv).
+    roster_only=False: they are appended to the roster with blank fields.
+    """
     by_uid = {r["user_id"]: r for r in roster if r.get("user_id")}
     by_name = {norm_name(r.get("name", "")): r for r in roster}
     mapping, added = {}, []
+    unmatched: dict[str, dict] = {}
     for s in sorted(swings.values(), key=lambda s: s["datetime"]):
         key = s.get("user_id") or norm_name(s["player"])
         row = by_uid.get(s.get("user_id")) if s.get("user_id") else None
@@ -227,7 +234,12 @@ def match_roster(swings: dict[str, dict], roster: list[dict]) -> dict[str, dict]
             if row is not None and s.get("user_id") and not row.get("user_id"):
                 row["user_id"] = s["user_id"]  # first time we see this player's id: remember it
                 by_uid[s["user_id"]] = row
-        if row is None:
+        if row is None and roster_only:
+            u = unmatched.setdefault(key, {"name": s["player"], "user_id": s.get("user_id", ""),
+                                           "swings": 0, "last_swing": ""})
+            u["swings"] += 1
+            u["last_swing"] = s["datetime"][:10]
+        elif row is None:
             row = {"name": s["player"], "user_id": s.get("user_id", ""), "active": "yes"}
             roster.append(row)
             added.append(s["player"])
@@ -238,6 +250,16 @@ def match_roster(swings: dict[str, dict], roster: list[dict]) -> dict[str, dict]
     if added:
         log(f"Added {len(added)} new player(s) to data/roster.csv (fill in grad_year and weight_lbs): "
             + ", ".join(added))
+    if unmatched:
+        log(f"Not on roster, left out ({len(unmatched)}): "
+            + ", ".join(f"{u['name']} ({u['swings']} swings)" for u in unmatched.values())
+            + ". If one of these is a misspelled roster name, fix the spelling in data/roster.csv.")
+        with UNMATCHED.open("w", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, fieldnames=["name", "user_id", "swings", "last_swing"])
+            w.writeheader()
+            w.writerows(sorted(unmatched.values(), key=lambda u: norm_name(u["name"])))
+    elif UNMATCHED.exists():
+        UNMATCHED.unlink()
     return mapping
 
 
@@ -305,7 +327,7 @@ def main() -> None:
     log(f"Swing history: {len(swings)} swings ({len(swings) - before:+d} new)")
 
     roster = load_roster()
-    mapping = match_roster(swings, roster)
+    mapping = match_roster(swings, roster, bool(cfg.get("roster_only", False)))
     save_roster(roster)
 
     tz = ZoneInfo(cfg.get("timezone") or "UTC")
@@ -317,7 +339,7 @@ def main() -> None:
     row_of: dict[int, dict] = {}
     for s in swings.values():
         row = mapping[s.get("user_id") or norm_name(s["player"])]
-        if (row.get("active") or "yes").lower() in INACTIVE:
+        if row is None or (row.get("active") or "yes").lower() in INACTIVE:
             continue
         parsed = {"datetime": s["datetime"]}
         for k in metric_keys:
