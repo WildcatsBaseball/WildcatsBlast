@@ -245,13 +245,27 @@
       "password_selector": "input[type=password]",
       "submit_selector": "button[type=submit], button:has-text('Log In'), button:has-text('Sign In'), button:has-text('Login')"
     },
-    "before_export_steps": [],
-    "export_steps": [
+    "before_export_steps": [
       {
-        "click": "button:has-text('Export'), button:has-text('Download'), [aria-label*='xport'], [aria-label*='ownload']"
+        "wait_for": "text=/download csv/i"
       },
       {
-        "click_optional": "text=/Save as CSV|Export CSV|CSV/i"
+        "click_optional": "[class*='date' i] button, button[class*='date' i], [aria-label*='date' i], input[placeholder*='date' i]"
+      },
+      {
+        "click_optional": "text=/^(last 30 days|past 30 days|last month|last 7 days)$/i"
+      },
+      {
+        "press": "body",
+        "key": "Escape"
+      },
+      {
+        "wait_ms": 2000
+      }
+    ],
+    "export_steps": [
+      {
+        "click": "button:has-text('Download CSV'), a:has-text('Download CSV'), :text-matches('download csv', 'i')"
       }
     ],
     "timeout_ms": 60000
