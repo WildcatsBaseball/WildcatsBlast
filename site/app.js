@@ -408,7 +408,7 @@
       document.getElementById("meta").textContent =
         `Updated ${fmtDate(D.generated_at)} · swings through ${fmtDate(D.data_through)}`;
       document.getElementById("foot").textContent =
-        `Blast Motion swing data via WIN Reality. ${D.players.length} players. Refreshed nightly.`;
+        `Blast Motion swing data via WIN Reality. ${D.players.length} players.`;
       route();
     })
     .catch((e) => { app.replaceChildren(h("p", { class: "empty" }, "Couldn't load data (" + e.message + ").")); });
