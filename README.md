@@ -80,7 +80,7 @@ Then open http://localhost:8000. The build script uses only the Python standard 
 
 | Setting | Meaning |
 |---|---|
-| `min_swings` | Swings needed in a window to be ranked or shaded (default 10) |
+| `min_swings` | Swings needed in a window to be ranked or shaded (currently 1, meaning everyone with a swing is ranked; raise it to bring back the "few swings" toggle) |
 | `recent_windows_days` | The recent-window tabs, in days (default `[30, 7]` gives "Last 30 days" and "Last 7 days" next to "All time") |
 | `peak_method` | `max` uses the best single swing. `p90` ignores one-off glitch swings. |
 | `exclude_action_types` | Defaults to `["air Swing"]`, which drops swings with no ball contact. Use `[]` to include them. |

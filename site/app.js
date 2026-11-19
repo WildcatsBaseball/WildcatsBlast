@@ -109,14 +109,14 @@
       seg([["avg", "Average"], ["peak", "Peak"]], S.stat, (v) => { S.stat = v; rerender(); }, "Statistic"),
       D.grad_classes.length ? select("Grad class", [["", "All"], ...D.grad_classes.map((g) => [String(g), String(g)])], S.grad, (v) => { S.grad = v; rerender(); }) : null,
       D.weight_classes.length ? select("Weight class", [["", "All"], ...D.weight_classes.map((w) => [w, w])], S.wclass, (v) => { S.wclass = v; rerender(); }) : null,
-      h("label", { class: "ctl" }, h("input", { type: "checkbox", checked: S.showLow, onchange: (e) => { S.showLow = e.target.checked; rerender(); } }),
-        `Show players under ${D.min_swings} swings`));
+      D.min_swings > 1 ? h("label", { class: "ctl" }, h("input", { type: "checkbox", checked: S.showLow, onchange: (e) => { S.showLow = e.target.checked; rerender(); } }),
+        `Show players under ${D.min_swings} swings`) : null);
 
     const legend = h("div", { class: "legend" },
       h("span", { class: "scale", "aria-hidden": "true" }, h("em", {}, "Bottom"), ["q1", "q2", "q3", "q4", "q5"].map((q) => h("span", { style: `background:var(--${q})` })), h("em", {}, "Top")),
       h("span", {}, "Shading = percentile among the players shown: red = top 20%, navy = bottom 20%."),
       h("span", {}, S.stat === "peak" ? "Peak = best single swing." : "Angle metrics (°) aren't shaded — there's no single best value."),
-      h("span", {}, `Ranked players need ${D.min_swings}+ swings (${winLabel()}).`));
+      D.min_swings > 1 ? h("span", {}, `Ranked players need ${D.min_swings}+ swings (${winLabel()}).`) : null);
 
     app.replaceChildren(controls, legend, h("div", { class: "table-card", id: "tablecard" }));
     drawTable();
@@ -252,7 +252,7 @@
       const cmpName = cmpOpts.find(([v]) => v === S.cmp)[1].toLowerCase().replace("class", "Class");
       const sub = low
         ? `Only ${st.n} swing${st.n === 1 ? "" : "s"} (${winLabel()}) — percentiles appear at ${D.min_swings}+ swings.`
-        : `Percentiles compare against ${others.length} other ${S.cmp === "all" ? "players" : "players in " + cmpName} with ${D.min_swings}+ swings (${winLabel()}).`;
+        : `Percentiles compare against ${others.length} other ${S.cmp === "all" ? "players" : "players in " + cmpName}${D.min_swings > 1 ? ` with ${D.min_swings}+ swings` : " with swings"} (${winLabel()}).`;
 
       const grid = h("div", { class: "mrows" },
         h("div", { class: "hd h-lbl" }, "Metric"), h("div", { class: "hd" }, "Average"), h("div", { class: "hd" }, "Peak"),

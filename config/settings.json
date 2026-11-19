@@ -6,7 +6,7 @@
     30,
     7
   ],
-  "min_swings": 10,
+  "min_swings": 1,
   "roster_only": true,
   "peak_method": "max",
   "history_mode": "merge",
