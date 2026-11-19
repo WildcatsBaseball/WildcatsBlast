@@ -21,7 +21,8 @@ Step types (each step is a JSON object with one action):
     {"goto": "<url>"}
 The download must be triggered by the last step in export_steps.
 
-On failure a screenshot + HTML snapshot are written to debug/ (uploaded by the workflow).
+On failure only the error message and page path are printed. The repo is public, so its Actions
+logs and artifacts are public too: never add page images, page HTML or page text.
 """
 from __future__ import annotations
 
@@ -37,7 +38,6 @@ from playwright.sync_api import sync_playwright
 ROOT = Path(__file__).resolve().parent.parent
 CFG = json.loads((ROOT / "config" / "settings.json").read_text(encoding="utf-8"))["export"]
 INBOX = ROOT / "data" / "inbox"
-DEBUG = ROOT / "debug"
 
 
 def expand(value: str) -> str:
@@ -57,15 +57,6 @@ def wait_hidden(locator, ms: int) -> bool:
         return True
     except PWTimeout:
         return False
-
-
-def page_text(page) -> str:
-    """Visible text of the page (never includes typed input values), for the failure log."""
-    try:
-        txt = page.inner_text("body", timeout=5000)
-    except Exception:
-        return "(unavailable)"
-    return " | ".join(line.strip() for line in txt.splitlines() if line.strip())[:1500]
 
 
 def run_step(page, step: dict, timeout: int) -> None:
@@ -130,7 +121,7 @@ def main() -> int:
                     if pw_field.is_visible():
                         pw_field.press("Enter")
                     if not wait_hidden(pw_field, 20000):
-                        raise RuntimeError("Still on the login page after submitting. Page text: " + page_text(page))
+                        raise RuntimeError("Still on the login page after submitting.")
                 page.wait_for_load_state("networkidle", timeout=timeout)
                 print(f"  logged in; now at {page.url}")
                 if "insights" not in page.url:
@@ -155,22 +146,12 @@ def main() -> int:
             if size < 200:
                 raise RuntimeError("Downloaded file is suspiciously small.")
             return 0
-        except Exception as exc:  # save evidence for debugging, then fail the job
-            DEBUG.mkdir(exist_ok=True)
-            try:
-                page.screenshot(path=str(DEBUG / "failure.png"), full_page=True)
-                (DEBUG / "failure.html").write_text(page.content(), encoding="utf-8")
-                (DEBUG / "url.txt").write_text(page.url, encoding="utf-8")
-            except Exception:
-                pass
-            print(f"EXPORT FAILED: {exc}", file=sys.stderr)
-            try:
-                print(f"  page url: {page.url}", file=sys.stderr)
-                print(f"  page text: {page_text(page)}", file=sys.stderr)
-                buttons = page.locator("button, a[role=button], [role=button]").all_inner_texts()
-                print(f"  buttons: {[b.strip() for b in buttons if b.strip()][:40]}", file=sys.stderr)
-            except Exception:
-                pass
+        except Exception as exc:
+            # This repo is public, so Actions logs and artifacts are public too: never write
+            # page images, page HTML or page text anywhere. Report only the error and the page path.
+            path = page.url.split("?")[0].split("#")[0] if page.url else "(none)"
+            print(f"EXPORT FAILED: {type(exc).__name__}: {str(exc).splitlines()[0][:200]} (page: {path})",
+                  file=sys.stderr)
             return 1
         finally:
             browser.close()

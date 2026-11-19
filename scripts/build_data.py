@@ -337,7 +337,10 @@ def main() -> None:
     metric_keys = [m["key"] for m in metrics_cfg]
     raw_keys = [m["key"] for m in metrics_cfg if not m.get("derived")]
 
-    inbox_files = sorted(INBOX.glob("*.csv"))
+    # Raw exports belong in data/inbox/, but also accept ones dropped straight into data/
+    known = {ROSTER.name, SWINGS.name, UNMATCHED.name}
+    stray = [p for p in ROSTER.parent.glob("*.csv") if p.name not in known]
+    inbox_files = sorted(INBOX.glob("*.csv")) + sorted(stray)
     replace = cfg.get("history_mode") == "replace" and inbox_files
     swings = {} if replace else load_swings()
     before = len(swings)

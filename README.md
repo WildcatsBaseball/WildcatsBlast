@@ -101,6 +101,14 @@ Each swing starts at 80 (a perfect 90°/90°) and loses 2 points per degree of "
 
 The result is floored at 20. A player's number is the average of their per-swing scores, so consistency counts. Examples: 90/90 → 80, 100/90 → 77, 90/82 → 79, 104/85 → 68, 110/90 → 51, 90/75 → 71, 110/85 → 41. All the numbers are adjustable under `connection_score` in `config/settings.json`.
 
+## Security and cost
+
+- **Cost: $0.** The repo is public, so GitHub Actions minutes and GitHub Pages hosting are free. The site is static files with no server, database, API keys or paid services. The nightly job takes about 30 seconds.
+- **No secrets in the code.** The only credentials ever used are the optional `WR_EMAIL` / `WR_PASSWORD` Actions secrets, which are unused while the automatic download is off. They can be deleted.
+- **Public repo means public logs and artifacts.** Never print page contents, screenshots or credentials in the workflow. `fetch_export.py` reports only the error message and the page path.
+- **Untrusted input:** names and values from CSV exports are only ever shown as plain text on the page (`textContent`), never as HTML.
+- **Who can change things:** only people with write access to this repo. Pull requests from forks can't run the workflow, because it has no `pull_request` trigger.
+
 ## Notes
 
 - Swing timestamps in the export are UTC and are converted to local dates using each row's GMT offset.
