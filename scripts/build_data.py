@@ -337,6 +337,10 @@ def main() -> None:
 
     groups: dict[int, list[dict]] = defaultdict(list)
     row_of: dict[int, dict] = {}
+    # swing_filters: {"bat_speed": {"min": 30}} drops swings outside the range from all stats
+    # (they stay in data/swings.csv, so changing the threshold needs no re-upload).
+    filters = cfg.get("swing_filters", {})
+    filtered_out = 0
     for s in swings.values():
         row = mapping[s.get("user_id") or norm_name(s["player"])]
         if row is None or (row.get("active") or "yes").lower() in INACTIVE:
@@ -344,8 +348,14 @@ def main() -> None:
         parsed = {"datetime": s["datetime"]}
         for k in metric_keys:
             parsed[k] = parse_num(s.get(k))
+        if any(parsed.get(k) is not None and (parsed[k] < f.get("min", float("-inf")) or parsed[k] > f.get("max", float("inf")))
+               for k, f in filters.items()):
+            filtered_out += 1
+            continue
         groups[id(row)].append(parsed)
         row_of[id(row)] = row
+    if filters:
+        log(f"Swing filters {filters}: {filtered_out} swing(s) left out of the stats")
 
     present = [m for m in metrics_cfg
                if any(s.get(m["key"]) is not None for lst in groups.values() for s in lst)]

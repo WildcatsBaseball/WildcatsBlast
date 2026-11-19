@@ -83,6 +83,7 @@ Then open http://localhost:8000. The build script uses only the Python standard 
 | `min_swings` | Swings needed in a window to be ranked or shaded (currently 1, meaning everyone with a swing is ranked; raise it to bring back the "few swings" toggle) |
 | `recent_windows_days` | The recent-window tabs, in days (default `[30, 7]` gives "Last 30 days" and "Last 7 days" next to "All time") |
 | `peak_method` | `max` uses the best single swing. `p90` ignores one-off glitch swings. |
+| `swing_filters` | Leaves swings out of all stats by metric range. Default `{"bat_speed": {"min": 30}}` drops swings under 30 mph. Other metrics can be added the same way, with `min` and/or `max`. |
 | `exclude_action_types` | Defaults to `["air Swing"]`, which drops swings with no ball contact. Use `[]` to include them. |
 | `metrics[].direction` | `higher` / `lower` / `none`. `none` means the metric isn't ranked, as for angles. |
 | `timezone` | Used for the 30-day cutoff |

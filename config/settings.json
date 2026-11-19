@@ -14,6 +14,11 @@
   "exclude_action_types": [
     "air Swing"
   ],
+  "swing_filters": {
+    "bat_speed": {
+      "min": 30
+    }
+  },
   "weight_classes": [
     {
       "name": "Under 150",
