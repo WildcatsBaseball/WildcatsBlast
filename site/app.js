@@ -182,7 +182,7 @@
       D.weight_classes.length ? th("wclass", "Wt class", null, "l opt") : null,
       th("n", "Swings", null, ""),
       ms.map((m) => th(m.key, m.short, m.unit || " ", "", `${m.label}${m.unit ? " (" + m.unit + ")" : ""}` +
-        (m.direction === "lower" ? " — lower is better" : m.direction === "none" ? " — not ranked" : ""))));
+        (m.direction === "lower" ? " — lower is better" : m.direction === "none" ? " — not ranked" : "") + (m.note ? ". " + m.note : ""))));
 
     const body = rows.map((p) => {
       const stt = statsOf(p);
@@ -263,7 +263,8 @@
         const pp = !low && ranked(m) ? percentile(pk, others.map((o) => statsOf(o).peak[m.key]).filter((x) => x != null), m.direction) : null;
         const pctEl = (pc) => pc == null ? null : h("span", { class: "pct" + (pc >= 80 ? " top" : pc < 20 ? " low" : "") }, `${ordinal(pc)} percentile`);
         grid.append(
-          h("div", { class: "lbl" }, m.label, m.direction === "lower" ? h("small", {}, " · lower is better") : null),
+          h("div", { class: "lbl" }, m.label, m.direction === "lower" ? h("small", {}, " · lower is better") : null,
+            m.note ? h("small", { style: "display:block" }, m.note.replace(/ \(.*\)$/, "")) : null),
           h("div", { class: "cell-avg" }, h("span", { class: "val" }, fmt(v, m), h("span", { class: "u" }, m.unit)), pctEl(pa)),
           h("div", { class: "cell-peak" }, ranked(m) ? [h("span", { class: "val" }, fmt(pk, m), h("span", { class: "u" }, m.unit)), pctEl(pp)] : h("span", { class: "pct" }, "—")),
           h("div", { class: "strip" }, strip(p, others, m)));

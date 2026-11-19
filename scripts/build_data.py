@@ -121,8 +121,8 @@ def read_export(path: Path, cfg: dict) -> list[dict]:
         if not c["date"]:
             raise SystemExit(f"{path.name}: no date column. Headers: {headers}\n"
                              "Add the header to columns.date in config/settings.json.")
-        metric_cols = {m["key"]: find_col(headers, m["columns"]) for m in cfg["metrics"]}
-        missing = [m["label"] for m in cfg["metrics"] if not metric_cols[m["key"]]]
+        metric_cols = {m["key"]: find_col(headers, m["columns"]) for m in cfg["metrics"] if not m.get("derived")}
+        missing = [m["label"] for m in cfg["metrics"] if not m.get("derived") and not metric_cols[m["key"]]]
         if missing:
             log(f"  {path.name}: not in this file: {', '.join(missing)}")
         known = {v for v in c.values() if v} | {v for v in metric_cols.values() if v}
@@ -265,6 +265,26 @@ def match_roster(swings: dict[str, dict], roster: list[dict], roster_only: bool)
 
 # --------------------------------------------------------------------------- stats
 
+def connection_score(ec: float | None, ci: float | None, p: dict) -> float | None:
+    """Wildcats Connection Score, 20-80, per swing (an estimate, not Blast's own formula).
+
+    Uses Blast's published targets: Early Connection 80-105 deg, Connection at Impact 80-95 deg,
+    the two within 15 deg of each other, ~90 deg ideal for both. A swing at 90/90 scores 80;
+    every degree of "miss" costs `points_per_degree` points:
+      miss = deg outside early range + deg outside impact range + deg of gap beyond max_gap
+             + center_weight * average distance of the two angles from 90
+    """
+    if ec is None or ci is None:
+        return None
+    def outside(x, lo, hi):
+        return lo - x if x < lo else (x - hi if x > hi else 0.0)
+    (elo, ehi), (ilo, ihi) = p.get("early_range", [80, 105]), p.get("impact_range", [80, 95])
+    miss = (outside(ec, elo, ehi) + outside(ci, ilo, ihi)
+            + max(0.0, abs(ec - ci) - p.get("max_gap", 15))
+            + p.get("center_weight", 0.5) * (abs(ec - 90) + abs(ci - 90)) / 2)
+    return max(20.0, min(80.0, 80.0 - p.get("points_per_degree", 2) * miss))
+
+
 def peak_of(values: list[float], direction: str, method: str) -> float | None:
     if not values or direction == "none":
         return None
@@ -311,6 +331,7 @@ def main() -> None:
     cfg = json.loads(CONFIG.read_text(encoding="utf-8"))
     metrics_cfg = cfg["metrics"]
     metric_keys = [m["key"] for m in metrics_cfg]
+    raw_keys = [m["key"] for m in metrics_cfg if not m.get("derived")]
 
     inbox_files = sorted(INBOX.glob("*.csv"))
     replace = cfg.get("history_mode") == "replace" and inbox_files
@@ -321,7 +342,7 @@ def main() -> None:
         for r in read_export(p, cfg):
             swings[r["id"]] = r
     if inbox_files:
-        save_swings(swings, metric_keys)
+        save_swings(swings, raw_keys)
         for p in inbox_files:
             p.unlink()
     log(f"Swing history: {len(swings)} swings ({len(swings) - before:+d} new)")
@@ -348,6 +369,9 @@ def main() -> None:
         parsed = {"datetime": s["datetime"]}
         for k in metric_keys:
             parsed[k] = parse_num(s.get(k))
+        if "connection_score" in parsed:
+            parsed["connection_score"] = connection_score(parsed.get("early_conn"), parsed.get("conn_impact"),
+                                                          cfg.get("connection_score", {}))
         if any(parsed.get(k) is not None and (parsed[k] < f.get("min", float("-inf")) or parsed[k] > f.get("max", float("inf")))
                for k, f in filters.items()):
             filtered_out += 1
@@ -391,7 +415,7 @@ def main() -> None:
                    + [{"key": f"d{d}", "label": f"Last {d} days", "days": d} for d in window_days],
         "min_swings": int(cfg.get("min_swings", 10)),
         "peak_method": peak_method,
-        "metrics": [{k: m[k] for k in ("key", "label", "short", "unit", "direction", "decimals")} for m in present],
+        "metrics": [{k: m[k] for k in ("key", "label", "short", "unit", "direction", "decimals", "note") if k in m} for m in present],
         "grad_classes": sorted({p["grad"] for p in players if p["grad"]}),
         "weight_classes": [c["name"] for c in cfg.get("weight_classes", [])
                            if any(p["wclass"] == c["name"] for p in players)],

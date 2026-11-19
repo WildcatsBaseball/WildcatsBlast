@@ -170,6 +170,17 @@
       ]
     },
     {
+      "key": "connection_score",
+      "label": "Connection Score",
+      "short": "Conn Score",
+      "unit": "",
+      "direction": "higher",
+      "decimals": 0,
+      "derived": true,
+      "columns": [],
+      "note": "Wildcats estimate from Early Connection + Connection at Impact (not Blast's own score)"
+    },
+    {
       "key": "attack_angle",
       "label": "Attack Angle",
       "short": "Attack",
@@ -278,5 +289,19 @@
       }
     ],
     "timeout_ms": 60000
+  },
+  "connection_score": {
+    "_about": "Wildcats estimate on a 20-80 scale (not Blast's formula). Built from Blast's published targets.",
+    "early_range": [
+      80,
+      105
+    ],
+    "impact_range": [
+      80,
+      95
+    ],
+    "max_gap": 15,
+    "center_weight": 0.5,
+    "points_per_degree": 2
   }
 }
