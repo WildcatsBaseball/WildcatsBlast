@@ -92,14 +92,14 @@ Then open http://localhost:8000. The build script uses only the Python standard 
 
 Blast's own Connection Score isn't in the WIN Reality export, so the site computes its own on the same 20–80 scale. It's built from Blast's published targets: Early Connection 80–105°, Connection at Impact 80–95°, the two within 15° of each other, and about 90° ideal for both.
 
-Each swing starts at 80 (a perfect 90°/90°) and loses 2 points per degree of "miss":
+Each swing starts at 80 (a perfect 90°/90°) and loses 2 points per degree of "miss". **Early Connection counts 2× as much as Connection at Impact.** A miss is:
 
-- degrees outside the Early Connection range, plus
-- degrees outside the Connection at Impact range, plus
+- degrees outside the Early Connection range (weighted 2×), plus
+- degrees outside the Connection at Impact range (weighted 1×), plus
 - degrees by which the gap between the two exceeds 15°, plus
-- half the average distance of the two angles from 90°.
+- a small penalty (0.2 per degree, same 2:1 weighting) for being away from 90° while still inside the ranges.
 
-The result is floored at 20. A player's number is the average of their per-swing scores, so consistency counts. Examples: 90/90 → 80, 95/88 → 76, 100/85 → 72, 104/82 → 55, 110/85 → 38. All the numbers are adjustable under `connection_score` in `config/settings.json`.
+The result is floored at 20. A player's number is the average of their per-swing scores, so consistency counts. Examples: 90/90 → 80, 100/90 → 77, 90/82 → 79, 104/85 → 68, 110/90 → 51, 90/75 → 71, 110/85 → 41. All the numbers are adjustable under `connection_score` in `config/settings.json`.
 
 ## Notes
 

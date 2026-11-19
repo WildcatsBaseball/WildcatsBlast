@@ -271,17 +271,21 @@ def connection_score(ec: float | None, ci: float | None, p: dict) -> float | Non
     Uses Blast's published targets: Early Connection 80-105 deg, Connection at Impact 80-95 deg,
     the two within 15 deg of each other, ~90 deg ideal for both. A swing at 90/90 scores 80;
     every degree of "miss" costs `points_per_degree` points:
-      miss = deg outside early range + deg outside impact range + deg of gap beyond max_gap
-             + center_weight * average distance of the two angles from 90
+      miss = we * deg outside early range + wi * deg outside impact range
+             + deg of gap beyond max_gap
+             + center_weight * (we * |EC - 90| + wi * |CI - 90|) / 2
+    we : wi = early_weight : impact_weight (default 2 : 1), scaled so they average 1.
     """
     if ec is None or ci is None:
         return None
     def outside(x, lo, hi):
         return lo - x if x < lo else (x - hi if x > hi else 0.0)
     (elo, ehi), (ilo, ihi) = p.get("early_range", [80, 105]), p.get("impact_range", [80, 95])
-    miss = (outside(ec, elo, ehi) + outside(ci, ilo, ihi)
+    ew, iw = float(p.get("early_weight", 1)), float(p.get("impact_weight", 1))
+    we, wi = 2 * ew / (ew + iw), 2 * iw / (ew + iw)
+    miss = (we * outside(ec, elo, ehi) + wi * outside(ci, ilo, ihi)
             + max(0.0, abs(ec - ci) - p.get("max_gap", 15))
-            + p.get("center_weight", 0.5) * (abs(ec - 90) + abs(ci - 90)) / 2)
+            + p.get("center_weight", 0.2) * (we * abs(ec - 90) + wi * abs(ci - 90)) / 2)
     return max(20.0, min(80.0, 80.0 - p.get("points_per_degree", 2) * miss))
 
 

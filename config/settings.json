@@ -301,7 +301,9 @@
       95
     ],
     "max_gap": 15,
-    "center_weight": 0.5,
+    "early_weight": 2,
+    "impact_weight": 1,
+    "center_weight": 0.2,
     "points_per_degree": 2
   }
 }
