@@ -385,7 +385,7 @@ def main() -> None:
 
     groups: dict[int, list[dict]] = defaultdict(list)
     row_of: dict[int, dict] = {}
-    # swing_filters: {"bat_speed": {"min": 30}} drops swings outside the range from all stats
+    # swing_filters: {"bat_speed": {"min": 30}} drops swings outside a fixed range from all stats
     # (they stay in data/swings.csv, so changing the threshold needs no re-upload).
     filters = cfg.get("swing_filters", {})
     filtered_out = 0
@@ -405,6 +405,21 @@ def main() -> None:
             continue
         groups[id(row)].append(parsed)
         row_of[id(row)] = row
+    # Relative filters: {"bat_speed": {"below_player_avg": 10}} drops a player's swings that are more
+    # than 10 below that player's own all-time average (all environments) for that metric.
+    for k, f in filters.items():
+        margin = f.get("below_player_avg")
+        if margin is None:
+            continue
+        for rid, lst in groups.items():
+            vals = [s[k] for s in lst if s.get(k) is not None]
+            if not vals:
+                continue
+            floor = mean(vals) - float(margin)
+            keep = [s for s in lst if s.get(k) is None or s[k] >= floor]
+            filtered_out += len(lst) - len(keep)
+            groups[rid] = keep
+    groups = {rid: lst for rid, lst in groups.items() if lst}
     if filters:
         log(f"Swing filters {filters}: {filtered_out} swing(s) left out of the stats")
 

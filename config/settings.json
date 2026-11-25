@@ -16,7 +16,7 @@
   ],
   "swing_filters": {
     "bat_speed": {
-      "min": 38
+      "below_player_avg": 10
     }
   },
   "weight_classes": [
