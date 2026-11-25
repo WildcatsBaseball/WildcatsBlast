@@ -79,6 +79,11 @@
     "action_type": [
       "actiontype",
       "Action Type"
+    ],
+    "environment": [
+      "Environment Tag",
+      "Environment",
+      "environment"
     ]
   },
   "metrics": [

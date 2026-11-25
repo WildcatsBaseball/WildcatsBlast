@@ -5,6 +5,7 @@ Live site: **https://mikeozga.github.io/Wildcats-Blast/**
 A free, public website that shows every hitter's Blast swing metrics (via WIN Reality) next to their peers'.
 
 - **Leaderboard**: sortable by any metric, with averages or peaks and all-time or last-30-day windows. You can filter by grad class and weight class, and cells are shaded by percentile.
+- **Environment filter**: show only swings from one WIN Reality environment tag (pitching machine, live pitch, tee and so on). Percentiles and shading are recalculated against that environment only. The list is built from the tags in your exports, so new tags appear automatically.
 - **Player pages**: search your name to see your averages and peaks, your percentile against all players, your grad class or your weight class, where you sit among teammates, and a weekly trend chart.
 - **Nightly refresh**: a GitHub Action downloads the export from teams.winreality.com, rebuilds the data and redeploys the site.
 

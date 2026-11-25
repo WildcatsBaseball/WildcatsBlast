@@ -42,6 +42,11 @@ def log(msg: str) -> None:
     print(msg, file=sys.stderr)
 
 
+def norm_env(e: str) -> str:
+    """'pitching_machine' / 'Pitching Machine ' -> 'pitching machine'."""
+    return re.sub(r"[\s_]+", " ", (e or "").strip().lower())
+
+
 def norm_header(h: str) -> str:
     return re.sub(r"[^a-z0-9%°]+", " ", (h or "").replace("﻿", "").lower()).strip()
 
@@ -114,7 +119,7 @@ def read_export(path: Path, cfg: dict) -> list[dict]:
         headers = reader.fieldnames or []
         cols = cfg["columns"]
         c = {k: find_col(headers, cols.get(k, [])) for k in
-             ("id", "user_id", "player", "first_name", "last_name", "date", "timezone", "action_type")}
+             ("id", "user_id", "player", "first_name", "last_name", "date", "timezone", "action_type", "environment")}
         if not (c["player"] or (c["first_name"] and c["last_name"])):
             raise SystemExit(f"{path.name}: no player-name column. Headers: {headers}\n"
                              "Add the header to columns.player in config/settings.json.")
@@ -151,7 +156,8 @@ def read_export(path: Path, cfg: dict) -> list[dict]:
                 else:
                     dt = dt.replace(tzinfo=timezone.utc).astimezone(fallback_tz).replace(tzinfo=None)
             out = {"user_id": (r.get(c["user_id"]) or "").strip() if c["user_id"] else "",
-                   "player": name, "datetime": dt.strftime("%Y-%m-%dT%H:%M:%S")}
+                   "player": name, "datetime": dt.strftime("%Y-%m-%dT%H:%M:%S"),
+                   "environment": norm_env(r.get(c["environment"], "")) if c["environment"] else ""}
             has_value = False
             for key, col in metric_cols.items():
                 val = parse_num(r.get(col)) if col else None
@@ -180,7 +186,7 @@ def load_swings() -> dict[str, dict]:
 
 
 def save_swings(swings: dict[str, dict], metric_keys: list[str]) -> None:
-    fields = ["id", "user_id", "player", "datetime"] + metric_keys
+    fields = ["id", "user_id", "player", "datetime", "environment"] + metric_keys
     rows = sorted(swings.values(), key=lambda r: (r["datetime"], r["player"]))
     with SWINGS.open("w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
@@ -313,6 +319,20 @@ def summarize(swings: list[dict], metrics: list[dict], peak_method: str) -> dict
     return out
 
 
+def by_env(swings: list[dict]) -> dict[str, list[dict]]:
+    out: dict[str, list[dict]] = {"all": swings}
+    for s in swings:
+        out.setdefault(s["env"], []).append(s)
+    return out
+
+
+def window_stats(swings: list[dict], metrics: list[dict], peak_method: str, cutoffs: dict) -> dict:
+    res = {"overall": summarize(swings, metrics, peak_method)}
+    for k, c in cutoffs.items():
+        res[k] = summarize([s for s in swings if s["datetime"][:10] >= c], metrics, peak_method)
+    return res
+
+
 def weekly(swings: list[dict], metrics: list[dict]) -> dict:
     buckets: dict[str, list[dict]] = defaultdict(list)
     for s in swings:
@@ -373,7 +393,7 @@ def main() -> None:
         row = mapping[s.get("user_id") or norm_name(s["player"])]
         if row is None or (row.get("active") or "yes").lower() in INACTIVE:
             continue
-        parsed = {"datetime": s["datetime"]}
+        parsed = {"datetime": s["datetime"], "env": norm_env(s.get("environment")) or "untagged"}
         for k in metric_keys:
             parsed[k] = parse_num(s.get(k))
         if "connection_score" in parsed:
@@ -392,6 +412,11 @@ def main() -> None:
                if any(s.get(m["key"]) is not None for lst in groups.values() for s in lst)]
     peak_method = cfg.get("peak_method", "max")
 
+    env_counts: dict[str, int] = defaultdict(int)
+    for lst in groups.values():
+        for s in lst:
+            env_counts[s["env"]] += 1
+
     players, used = [], set()
     for rid, lst in groups.items():
         row = row_of[rid]
@@ -406,10 +431,9 @@ def main() -> None:
             "grad": int(grad) if grad.isdigit() else None,
             "wclass": row.get("weight_class") or weight_class_for(parse_num(row.get("weight_lbs")),
                                                                   cfg.get("weight_classes", [])),
-            "stats": {"overall": summarize(lst, present, peak_method),
-                      **{k: summarize([s for s in lst if s["datetime"][:10] >= c], present, peak_method)
-                         for k, c in cutoffs.items()}},
-            "trend": weekly(lst, present),
+            # stats[environment][window]; "all" = every environment
+            "stats": {env: window_stats(sub, present, peak_method, cutoffs) for env, sub in by_env(lst).items()},
+            "trend": {env: weekly(sub, present) for env, sub in by_env(lst).items()},
         })
     players.sort(key=lambda p: norm_name(p["name"]))
 
@@ -418,6 +442,9 @@ def main() -> None:
         "data_through": max((s["datetime"][:10] for s in swings.values()), default=None),
         "team_name": cfg.get("team_name", ""),
         "site_title": cfg.get("site_title", "Swing Metrics"),
+        "environments": [{"key": "all", "label": "All environments", "n": sum(env_counts.values())}]
+                        + [{"key": e, "label": e[:1].upper() + e[1:], "n": n}
+                           for e, n in sorted(env_counts.items(), key=lambda kv: -kv[1])],
         "windows": [{"key": "overall", "label": "All time"}]
                    + [{"key": f"d{d}", "label": f"Last {d} days", "days": d} for d in window_days],
         "min_swings": int(cfg.get("min_swings", 10)),

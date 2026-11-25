@@ -4,7 +4,7 @@
 
   // ------------------------------------------------------------------ state
   const STORE_KEY = "swing-metrics-prefs-v1";
-  const S = { win: "overall", stat: "avg", grad: "", wclass: "", showLow: false, q: "",
+  const S = { win: "overall", env: "all", stat: "avg", grad: "", wclass: "", showLow: false, q: "",
               sort: "bat_speed", dir: -1, cmp: "all", trend: "bat_speed" };
   try { Object.assign(S, JSON.parse(localStorage.getItem(STORE_KEY) || "{}"), { q: "" }); } catch (e) { /* ignore */ }
   const save = () => { try { const { q, ...rest } = S; localStorage.setItem(STORE_KEY, JSON.stringify(rest)); } catch (e) { /* ignore */ } };
@@ -42,10 +42,14 @@
   const ordinal = (n) => { const v = n % 100; return n + (["th", "st", "nd", "rd"][(v - 20) % 10] || ["th", "st", "nd", "rd"][v] || "th"); };
   const fmtDate = (iso, opts) => iso ? new Date(iso.length === 10 ? iso + "T12:00:00" : iso)
       .toLocaleDateString(undefined, opts || { month: "short", day: "numeric", year: "numeric" }) : "—";
-  const statsOf = (p, win = S.win) => p.stats[win] || null;
+  const statsOf = (p, win = S.win, env = S.env) => (p.stats[env] || {})[win] || null;
   const ranked = (m) => m.direction !== "none";
   const winLabel = () => (D.windows.find((w) => w.key === S.win) || D.windows[0]).label.toLowerCase();
   const winOpts = () => D.windows.map((w) => [w.key, w.label]);
+  const envLabel = () => (D.environments.find((e) => e.key === S.env) || D.environments[0]).label;
+  const scopeLabel = () => winLabel() + (S.env === "all" ? "" : " · " + envLabel().toLowerCase());
+  const envSelect = (onPick) => D.environments.length > 2
+    ? select("Environment", D.environments.map((e) => [e.key, e.key === "all" ? "All" : e.label]), S.env, onPick) : null;
 
   /** Percentile (0-100) of value among others; ties count half. Higher = better for the metric. */
   function percentile(value, others, dir) {
@@ -107,6 +111,7 @@
       h("div", { class: "search" }, searchIcon, searchInput, datalist),
       seg(winOpts(), S.win, (v) => { S.win = v; rerender(); }, "Time window"),
       seg([["avg", "Average"], ["peak", "Peak"]], S.stat, (v) => { S.stat = v; rerender(); }, "Statistic"),
+      envSelect((v) => { S.env = v; rerender(); }),
       D.grad_classes.length ? select("Grad class", [["", "All"], ...D.grad_classes.map((g) => [String(g), String(g)])], S.grad, (v) => { S.grad = v; rerender(); }) : null,
       D.weight_classes.length ? select("Weight class", [["", "All"], ...D.weight_classes.map((w) => [w, w])], S.wclass, (v) => { S.wclass = v; rerender(); }) : null,
       D.min_swings > 1 ? h("label", { class: "ctl" }, h("input", { type: "checkbox", checked: S.showLow, onchange: (e) => { S.showLow = e.target.checked; rerender(); } }),
@@ -208,7 +213,7 @@
 
     const table = h("table", { class: "board" }, h("thead", {}, head), h("tbody", {}, body));
     card.replaceChildren(rows.length ? table : h("p", { class: "empty" },
-      q ? `No player matching “${S.q}” has swings ${S.win !== "overall" ? "in the " + winLabel() : "recorded"}.` : "No players match these filters."));
+      q ? `No player matching “${S.q}” has swings ${S.win !== "overall" || S.env !== "all" ? "in " + scopeLabel() : "recorded"}.` : "No players match these filters."));
   }
 
   // ------------------------------------------------------------------ player
@@ -228,9 +233,10 @@
     const chips = h("div", { class: "chips" },
       p.grad ? h("span", { class: "chip" }, "Class of ", h("b", {}, p.grad)) : null,
       p.wclass ? h("span", { class: "chip" }, h("b", {}, p.wclass), " lbs") : null,
-      h("span", { class: "chip" }, h("b", {}, p.stats.overall.n), " swings all time"),
-      D.windows.filter((w) => w.days).map((w) => h("span", { class: "chip" }, h("b", {}, p.stats[w.key] ? p.stats[w.key].n : 0), ` in ${w.label.toLowerCase()}`)),
-      h("span", { class: "chip" }, "Last swing ", h("b", {}, fmtDate(p.stats.overall.last, { month: "short", day: "numeric" }))));
+      S.env !== "all" ? h("span", { class: "chip" }, h("b", {}, envLabel())) : null,
+      h("span", { class: "chip" }, h("b", {}, statsOf(p, "overall") ? statsOf(p, "overall").n : 0), " swings all time"),
+      D.windows.filter((w) => w.days).map((w) => h("span", { class: "chip" }, h("b", {}, statsOf(p, w.key) ? statsOf(p, w.key).n : 0), ` in ${w.label.toLowerCase()}`)),
+      h("span", { class: "chip" }, "Last swing ", h("b", {}, fmtDate(p.stats.all.overall.last, { month: "short", day: "numeric" }))));
 
     const cmpOpts = [["all", "All players"]];
     if (p.grad) cmpOpts.push(["grad", `Class of ${p.grad}`]);
@@ -239,12 +245,13 @@
       h("div", {}, h("h2", {}, p.name), chips),
       h("div", { class: "controls", style: "margin:0" },
         seg(winOpts(), S.win, (v) => { S.win = v; rer(); }, "Time window"),
+        envSelect((v) => { S.env = v; rer(); }),
         select("Compare to", cmpOpts, S.cmp, (v) => { S.cmp = v; rer(); })));
 
     const parts = [h("a", { class: "back", href: "#/" }, "← All players"), head];
 
     if (!st) {
-      parts.push(h("div", { class: "card" }, h("p", { class: "empty" }, `No swings in the ${winLabel()}. Switch to “All time” to see this player's numbers.`)));
+      parts.push(h("div", { class: "card" }, h("p", { class: "empty" }, `No swings in ${scopeLabel()}. Try “All time” or a different environment.`)));
     } else {
       const peers = peerGroup(p);
       const others = peers.filter((o) => o.id !== p.id);
@@ -252,7 +259,7 @@
       const cmpName = cmpOpts.find(([v]) => v === S.cmp)[1].toLowerCase().replace("class", "Class");
       const sub = low
         ? `Only ${st.n} swing${st.n === 1 ? "" : "s"} (${winLabel()}) — percentiles appear at ${D.min_swings}+ swings.`
-        : `Percentiles compare against ${others.length} other ${S.cmp === "all" ? "players" : "players in " + cmpName}${D.min_swings > 1 ? ` with ${D.min_swings}+ swings` : " with swings"} (${winLabel()}).`;
+        : `Percentiles compare against ${others.length} other ${S.cmp === "all" ? "players" : "players in " + cmpName}${D.min_swings > 1 ? ` with ${D.min_swings}+ swings` : " with swings"} (${scopeLabel()}).`;
 
       const grid = h("div", { class: "mrows" },
         h("div", { class: "hd h-lbl" }, "Metric"), h("div", { class: "hd" }, "Average"), h("div", { class: "hd" }, "Peak"),
@@ -269,7 +276,7 @@
           h("div", { class: "cell-peak" }, ranked(m) ? [h("span", { class: "val" }, fmt(pk, m), h("span", { class: "u" }, m.unit)), pctEl(pp)] : h("span", { class: "pct" }, "—")),
           h("div", { class: "strip" }, strip(p, others, m)));
       }
-      parts.push(h("div", { class: "card" }, h("h3", {}, `Metrics · ${winLabel()}`), h("p", { class: "sub" }, sub), grid));
+      parts.push(h("div", { class: "card" }, h("h3", {}, `Metrics · ${scopeLabel()}`), h("p", { class: "sub" }, sub), grid));
       parts.push(trendCard(p, others));
     }
     app.replaceChildren(...parts);
@@ -317,7 +324,7 @@
     trendCtx = { p, others };
     const sel = select("Metric", D.metrics.map((m) => [m.key, m.label]), S.trend, (v) => { S.trend = v; save(); drawTrend(); });
     return h("div", { class: "card trend" },
-      h("div", { class: "trend-ctl" }, h("div", {}, h("h3", {}, "Weekly trend"), h("p", { class: "sub", style: "margin:0" }, "Average of each week's swings, all time")), sel),
+      h("div", { class: "trend-ctl" }, h("div", {}, h("h3", {}, "Weekly trend"), h("p", { class: "sub", style: "margin:0" }, "Average of each week's swings, all time" + (S.env === "all" ? "" : " · " + envLabel().toLowerCase()))), sel),
       h("div", { id: "trendplot" }),
       h("div", { class: "trend-legend" }, h("span", {}, h("i"), trendCtx.p.name), h("span", { id: "reflegend" }, h("i", { class: "ref" }), "Peer average")));
   }
@@ -336,7 +343,7 @@
     if (!host || !trendCtx) return;
     const { p, others } = trendCtx;
     const m = M[S.trend];
-    const t = p.trend;
+    const t = p.trend[S.env] || { weeks: [], n: [], m: {} };
     const pts = t.weeks.map((w, i) => ({ w, v: t.m[m.key] ? t.m[m.key][i] : null, n: t.n[i] })).filter((d) => d.v != null);
     const refVals = others.map((o) => statsOf(o).avg[m.key]).filter((v) => v != null);
     const ref = refVals.length ? refVals.reduce((a, b) => a + b, 0) / refVals.length : null;
@@ -402,6 +409,7 @@
     .then((data) => {
       D = data;
       M = Object.fromEntries(D.metrics.map((m) => [m.key, m]));
+      if (!D.environments || !D.environments.some((e) => e.key === S.env)) S.env = "all";
       if (!D.windows.some((w) => w.key === S.win)) S.win = S.win === "recent" && D.windows.some((w) => w.key === "d30") ? "d30" : "overall";
       document.getElementById("title").textContent = D.site_title;
       document.getElementById("team").textContent = D.team_name || "";
