@@ -18,6 +18,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+import math
 import re
 import sys
 from collections import defaultdict
@@ -219,6 +220,18 @@ def weight_class_for(weight: float | None, classes: list[dict]) -> str:
     for c in classes:
         if c.get("min", float("-inf")) <= weight <= c.get("max", float("inf")):
             return c["name"]
+    return ""
+
+
+def weight_range_label(c: dict) -> str:
+    """{"max": 164.99} -> "under 165 lbs"; {"min": 165, "max": 179.99} -> "165–179 lbs"; {"min": 180} -> "180+ lbs"."""
+    lo, hi = c.get("min"), c.get("max")
+    if lo is None and hi is not None:
+        return f"under {math.ceil(hi)} lbs"
+    if lo is not None and hi is None:
+        return f"{lo:g}+ lbs"
+    if lo is not None and hi is not None:
+        return f"{lo:g}–{math.floor(hi)} lbs"
     return ""
 
 
@@ -468,6 +481,7 @@ def main() -> None:
         "grad_classes": sorted({p["grad"] for p in players if p["grad"]}),
         "weight_classes": [c["name"] for c in cfg.get("weight_classes", [])
                            if any(p["wclass"] == c["name"] for p in players)],
+        "weight_class_ranges": {c["name"]: weight_range_label(c) for c in cfg.get("weight_classes", [])},
         "players": players,
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)

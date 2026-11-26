@@ -42,7 +42,7 @@ site/                     the website (plain HTML/CSS/JS, no build step)
 
 - **The roster is the master list.** Only players in `data/roster.csv` appear on the site. Swings from anyone else (coaches, players who left, misspelled names) are left out and listed in `data/unmatched_players.csv`. Check that file if a player is missing from the site; usually their name in the roster doesn't match WIN Reality's spelling. To add a player, add a row with their name exactly as WIN Reality spells it. (Set `"roster_only": false` in `config/settings.json` to instead auto-add unknown players to the roster.)
 - **Players who left**: set `active` to `no` to hide them.
-- **Weight classes** are defined in `config/settings.json → weight_classes`. You can also type a class name directly into the roster's `weight_class` column, which overrides the weight-based class.
+- **Weight classes** are defined in `config/settings.json → weight_classes`. They're currently Lightweight (under 165 lbs), Middleweight (165–179 lbs) and Heavyweight (180+ lbs). You can also type a class name directly into the roster's `weight_class` column, which overrides the weight-based class.
 
 ## Automatic download (currently off)
 

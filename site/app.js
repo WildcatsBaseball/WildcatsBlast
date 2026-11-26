@@ -45,6 +45,7 @@
   const statsOf = (p, win = S.win, env = S.env) => (p.stats[env] || {})[win] || null;
   const ranked = (m) => m.direction !== "none";
   const winLabel = () => (D.windows.find((w) => w.key === S.win) || D.windows[0]).label.toLowerCase();
+  const wRange = (w) => (D.weight_class_ranges || {})[w] || "";
   const winOpts = () => D.windows.map((w) => [w.key, w.label]);
   const envLabel = () => (D.environments.find((e) => e.key === S.env) || D.environments[0]).label;
   const scopeLabel = () => winLabel() + (S.env === "all" ? "" : " · " + envLabel().toLowerCase());
@@ -113,7 +114,7 @@
       seg([["avg", "Average"], ["peak", "Peak"]], S.stat, (v) => { S.stat = v; rerender(); }, "Statistic"),
       envSelect((v) => { S.env = v; rerender(); }),
       D.grad_classes.length ? select("Grad class", [["", "All"], ...D.grad_classes.map((g) => [String(g), String(g)])], S.grad, (v) => { S.grad = v; rerender(); }) : null,
-      D.weight_classes.length ? select("Weight class", [["", "All"], ...D.weight_classes.map((w) => [w, w])], S.wclass, (v) => { S.wclass = v; rerender(); }) : null,
+      D.weight_classes.length ? select("Weight class", [["", "All"], ...D.weight_classes.map((w) => [w, wRange(w) ? `${w} (${wRange(w)})` : w])], S.wclass, (v) => { S.wclass = v; rerender(); }) : null,
       D.min_swings > 1 ? h("label", { class: "ctl" }, h("input", { type: "checkbox", checked: S.showLow, onchange: (e) => { S.showLow = e.target.checked; rerender(); } }),
         `Show players under ${D.min_swings} swings`) : null);
 
@@ -232,7 +233,7 @@
     const st = statsOf(p);
     const chips = h("div", { class: "chips" },
       p.grad ? h("span", { class: "chip" }, "Class of ", h("b", {}, p.grad)) : null,
-      p.wclass ? h("span", { class: "chip" }, h("b", {}, p.wclass), " lbs") : null,
+      p.wclass ? h("span", { class: "chip" }, h("b", {}, p.wclass), wRange(p.wclass) ? ` · ${wRange(p.wclass)}` : "") : null,
       S.env !== "all" ? h("span", { class: "chip" }, h("b", {}, envLabel())) : null,
       h("span", { class: "chip" }, h("b", {}, statsOf(p, "overall") ? statsOf(p, "overall").n : 0), " swings all time"),
       D.windows.filter((w) => w.days).map((w) => h("span", { class: "chip" }, h("b", {}, statsOf(p, w.key) ? statsOf(p, w.key).n : 0), ` in ${w.label.toLowerCase()}`)),
@@ -240,7 +241,7 @@
 
     const cmpOpts = [["all", "All players"]];
     if (p.grad) cmpOpts.push(["grad", `Class of ${p.grad}`]);
-    if (p.wclass) cmpOpts.push(["wclass", `${p.wclass} lbs`]);
+    if (p.wclass) cmpOpts.push(["wclass", p.wclass]);
     const head = h("div", { class: "p-head" },
       h("div", {}, h("h2", {}, p.name), chips),
       h("div", { class: "controls", style: "margin:0" },
