@@ -183,11 +183,11 @@
     const head = h("tr", {},
       h("th", { class: "l", scope: "col" }, "#"),
       th("name", "Player", null, "l sticky"),
-      D.grad_classes.length ? th("grad", "Grad", null, "opt") : null,
-      D.weight_classes.length ? th("wclass", "Wt class", null, "l opt") : null,
       th("n", "Swings", null, ""),
       ms.map((m) => th(m.key, m.short, m.unit || " ", "", `${m.label}${m.unit ? " (" + m.unit + ")" : ""}` +
-        (m.direction === "lower" ? " — lower is better" : m.direction === "none" ? " — not ranked" : "") + (m.note ? ". " + m.note : ""))));
+        (m.direction === "lower" ? " — lower is better" : m.direction === "none" ? " — not ranked" : "") + (m.note ? ". " + m.note : ""))),
+      D.grad_classes.length ? th("grad", "Grad", null, "opt meta-first") : null,
+      D.weight_classes.length ? th("wclass", "Wt class", null, "l opt" + (D.grad_classes.length ? "" : " meta-first")) : null);
 
     const body = rows.map((p) => {
       const stt = statsOf(p);
@@ -195,8 +195,6 @@
       return h("tr", { class: low ? "low" : null },
         h("td", { class: "rank l" }, rankOf.get(p.id) || ""),
         h("td", { class: "name l sticky" }, h("a", { href: "#/p/" + p.id }, p.name), low ? h("span", { class: "tag" }, "few swings") : null),
-        D.grad_classes.length ? h("td", { class: "dim opt" }, p.grad || "—") : null,
-        D.weight_classes.length ? h("td", { class: "l dim opt" }, p.wclass || "—") : null,
         h("td", { class: "dim" }, stt.n),
         ms.map((m) => {
           const v = stt[st][m.key];
@@ -208,7 +206,9 @@
             pc != null ? `${ordinal(pc)} percentile of ${pools[m.key].length} players` : (low ? `Fewer than ${D.min_swings} swings — not ranked` : "Not ranked")));
           td.addEventListener("pointerleave", hideTip);
           return td;
-        }));
+        }),
+        D.grad_classes.length ? h("td", { class: "dim opt meta-first" }, p.grad || "—") : null,
+        D.weight_classes.length ? h("td", { class: "l dim opt" + (D.grad_classes.length ? "" : " meta-first") }, p.wclass || "—") : null);
     });
 
     const table = h("table", { class: "board" }, h("thead", {}, head), h("tbody", {}, body));

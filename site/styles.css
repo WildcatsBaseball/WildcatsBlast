@@ -115,6 +115,7 @@ table.board { border-collapse: separate; border-spacing: 0; width: 100%; font-va
 .board td.q4 { background: var(--q4); color: var(--q4-ink); }
 .board td.q5 { background: var(--q5); color: var(--q5-ink); font-weight: 600; }
 .board td.q1 { font-weight: 600; }
+.board .meta-first { border-left: 1px solid var(--grid); padding-left: 14px; }
 .board td.sorted { box-shadow: inset 2px 0 0 var(--axis), inset -2px 0 0 var(--axis); }
 .empty { padding: 40px 16px; text-align: center; color: var(--muted); }
 
@@ -165,6 +166,5 @@ footer { margin-top: 28px; color: var(--muted); font-size: 0.8rem; }
   .mrows .cell-avg, .mrows .cell-peak { border-bottom: 0; padding-bottom: 2px; }
   .p-head h2 { font-size: 1.5rem; }
   header.top .logo { width: 40px; }
-  .board .opt { display: none; }
   .board th, .board td { padding: 7px 8px; }
 }
