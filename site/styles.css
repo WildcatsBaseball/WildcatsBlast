@@ -61,7 +61,7 @@ body { background: var(--page); color: var(--ink); font-size: 15px; line-height:
 a { color: var(--accent-ink); }
 button, input, select { font: inherit; color: inherit; }
 
-.wrap { max-width: 1400px; margin: 0 auto; padding: 20px 16px 48px; }
+.wrap { max-width: 1680px; margin: 0 auto; padding: 20px 16px 48px; }
 header.top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; margin-bottom: 16px; }
 header.top h1 { margin: 0; font-size: 1.6rem; letter-spacing: -0.01em; }
 header.top h1 a { display: inline-flex; align-items: center; gap: 12px; }
@@ -92,7 +92,7 @@ header.top .team { color: var(--ink-2); font-weight: 500; margin-left: 8px; font
 /* table */
 .table-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: auto; max-height: calc(100vh - 210px); min-height: 300px; }
 table.board { border-collapse: separate; border-spacing: 0; width: 100%; font-variant-numeric: tabular-nums; font-size: 0.9rem; }
-.board th, .board td { padding: 7px 10px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--grid); }
+.board th, .board td { padding: 7px 8px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--grid); }
 .board thead th { position: sticky; top: 0; z-index: 2; background: var(--surface); font-weight: 600; color: var(--ink-2); font-size: 0.78rem; vertical-align: bottom; line-height: 1.2; }
 .board thead th button { all: unset; cursor: pointer; display: inline-flex; flex-direction: column; align-items: flex-end; gap: 1px; }
 .board thead th .unit { color: var(--muted); font-weight: 400; }
